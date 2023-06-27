@@ -1,0 +1,655 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE sailpoint PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+
+<!-- (c) Copyright 2008 SailPoint Technologies, Inc., All Rights Reserved. -->
+
+<!--
+  This is used by 'iiq upgrade' to drive upgrading the schema and data between
+  revisions.
+
+  There are two files that define the upgrade, upgrade.xml and
+  upgradeObjects.xml.
+
+  upgrade.xml is processed in a special way before Hibernate
+  is started so that changes can be made at the JDBC level.  upgrade.xml should
+  only contain <ImportAction> elements that use the "execute" command to
+  call upgrader classes.  *DO NOT PUT STATIC XML OBJECTS IN UPGRADE.XML*
+
+  upgradeObjects.xml (this file) is included by upgrade.xml and will be
+  imported after Hibernate is started.  Any changes to objects that can be
+  represented as static XML or as ImportActions with the "merge" command
+  must go in upgradeObjects.xml to ensure that they are parsed after
+  Hibernate has been started so that references can be resolved.
+
+-->
+<sailpoint>
+
+  <!--
+     This will reimport some updated objects
+     and should be safe to do for every release.
+   -->
+  <ImportAction name='include' value='WEB-INF/config/authorization.xml' />
+  <ImportAction name='include' value='WEB-INF/config/reportDefinitions.xml' />
+  <ImportAction name='include' value='WEB-INF/config/tasks.xml' />
+  <ImportAction name='include' value='WEB-INF/config/reportTasks.xml' />
+  <ImportAction name='include' value='WEB-INF/config/archiveReports.xml'/>
+  <ImportAction name='include' value='WEB-INF/config/rules.xml' />
+  <ImportAction name='include' value='WEB-INF/config/workflowRules.xml' />
+  <ImportAction name='include' value='WEB-INF/config/workflowSubs.xml' />
+  <ImportAction name='include' value='WEB-INF/config/workflowRegistry.xml' />
+  <ImportAction name='include' value='WEB-INF/config/workflow.xml' />
+  <ImportAction name='include' value='WEB-INF/config/form.xml' />
+  <ImportAction name='include' value='WEB-INF/config/reportForms.xml' />
+  <ImportAction name='include' value='WEB-INF/config/emailtemplates.xml' />
+  <ImportAction name='include' value='WEB-INF/config/defaultPasswordPolicies.xml' />
+  <ImportAction name='include' value='WEB-INF/config/connectorRegistry.xml' />
+  <ImportAction name='include' value='WEB-INF/config/connectorRegistryDeprecated.xml' />
+  <!-- Controlled Availability for Connectors -->
+  <ImportAction name='include' value='WEB-INF/config/connectorRegistryCAConnectors.xml' />
+  <ImportAction name='include' value='WEB-INF/config/reportRules.xml' />
+  <ImportAction name="include" value="WEB-INF/config/lcmForms.xml" />
+  <ImportAction name="include" value="WEB-INF/config/sendEmailPostActionRule.xml" />
+  <ImportAction name="include" value="WEB-INF/config/cefActivityTransformRule.xml" />
+  <ImportAction name="include" value="WEB-INF/config/cefActivityCorrelationRule.xml" />
+  <ImportAction name="include" value="WEB-INF/config/workflowConfigForms.xml" />
+  <!-- Scim configuration -->
+  <ImportAction name='include' value='WEB-INF/config/scimConfiguration.xml' />
+  <!-- Applications Builder Rule XML -->
+  <ImportAction name="include" value="WEB-INF/config/applicationBuilderRule.xml" />
+
+  <ImportAction name="merge">
+    <UIConfig name='UIConfig'>
+      <Attributes>
+        <Map>
+          <entry key="uiApprovalListColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="id" property="id" sortProperty="id" sortable="true" />
+                <ColumnConfig dataIndex="created" property="created" sortProperty="created" sortable="true" />
+                <ColumnConfig dataIndex="priority" property="level" sortProperty="level" sortable="true" />
+                <ColumnConfig dataIndex="accessRequestName" property="identityRequestId" sortable="false" />
+                <ColumnConfig dataIndex="requester" property="requester" sortable="false" />
+                <ColumnConfig dataIndex="owner" property="owner" sortable="false" />
+                <ColumnConfig dataIndex="workItemName" property="name" sortable="false" />
+                <ColumnConfig dataIndex="assignee" property="assignee" sortable="false" />
+                <ColumnConfig dataIndex="workflowCaseId" property="workflowCase.id" sortable="false" />
+                <ColumnConfig dataIndex="targetId" property="targetId" sortable="false" />
+                <!--Calculated columns -->
+                <ColumnConfig dataIndex="target" />
+                <ColumnConfig dataIndex="esigMeaning" />
+                <ColumnConfig dataIndex="commentCount" />
+              </List>
+            </value>
+          </entry>
+        </Map>
+      </Attributes>
+    </UIConfig>
+  </ImportAction>
+
+  <ImportAction name="merge">
+    <UIConfig name='UIConfig'>
+      <Attributes>
+        <Map>
+          <entry key="moduleStatusColumns">
+            <value>
+              <List>
+                <ColumnConfig property="id" fieldOnly="true"/>
+                <ColumnConfig property="name" headerKey="ui_env_mon_module_grid_hdr_name" renderer="spModuleStatusDetailColumn" sortable="true"/>
+                <ColumnConfig property="description" headerKey="ui_env_mon_module_grid_hdr_desc" renderer="spTranslate" sortable="true" hideable="true"/>
+                <ColumnConfig dataIndex="enabled" fieldOnly="true" groupProperty="enabled" stateId="description"/>
+                <ColumnConfig dataIndex="statuses" fixed="Right" headerKey="ui_env_mon_module_grid_hdr_status" renderer="spAppsStatusColumn" sortable="false"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="moduleTableColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="name" property="name" sortable="true" hideable="true"/>
+                <ColumnConfig headerKey="host" dataIndex="host" sortable="false" hideable="true"/>
+                <ColumnConfig headerKey="modified" property="modified" renderer="SailPoint.Date.DateTimeRenderer" sortable="true" hideable="true"/>
+              </List>
+            </value>
+          </entry>
+        </Map>
+      </Attributes>
+    </UIConfig>
+  </ImportAction>
+
+  <!--
+    If this flag is true, then scripts will NOT be allowed to access classes from
+    plugins, acting as a kill switch to block scripts from using
+    classes loaded from plugins.
+  -->
+  <ImportAction name="merge">
+    <Configuration name="SystemConfiguration">
+      <Attributes>
+        <Map>
+          <entry key="pluginProhibitScripting" value="false" />
+
+          <!-- Attachment config, default disabled -->
+          <entry key='attachmentsEnabled' value="false" />
+          <entry key='attachmentsMaxFileSize' value="5" />
+          <entry key='attachmentsAllowedFileTypes' value='["txt","jpg","png"]' />
+        
+          <!--
+          Add PluginConfig to the list of Form types to display under system settings.
+          -->
+          <entry key="formsTypeFilter">
+            <value>
+              <List>
+                <String>PluginConfig</String>
+              </List>
+            </value>
+          </entry>
+
+          <entry key='searchInputDefinitions'>
+            <value>
+              <List>
+                <SearchInputDefinition sortIndex="16" description="srch_input_def_audit_client_host" headerKey="srch_input_def_audit_client_host" ignoreCase="true"
+                                       inputType="Equal" name="audit.clientHost" propertyName="clientHost" propertyType="String" searchType="Audit"/>
+                <SearchInputDefinition sortIndex="17" description="srch_input_def_audit_server_host" headerKey="srch_input_def_audit_server_host" ignoreCase="true"
+                                       inputType="Equal" name="audit.serverHost" propertyName="serverHost" propertyType="String" searchType="Audit"/>
+              </List>
+            </value>
+          </entry>
+
+          <!-- Days before sunset to send a reminder for role deassignment -->
+          <entry key="roleSunsetNotificationDaysReminder" value="0" />
+          <!-- E-mail template to use when a sunset expiration is approaching -->
+          <entry key="sunsetExpirationReminderEmailTemplate" value="Sunset Expiration Reminder"/>
+
+          <!-- List of OWASP Sanitizer Policies supported for HTML descriptions. Possible values are
+               BLOCKS, FORMATTING, TABLES, STYLES, LINKS, IMAGES.  Note that modifying this list could lead to undesired
+               UI behavior -->
+          <entry key="htmlSanitizerPolicies">
+            <value>
+              <List>
+                <String>BLOCKS</String>
+                <String>FORMATTING</String>
+              </List>
+            </value>
+          </entry>
+        </Map>
+      </Attributes>
+    </Configuration>
+  </ImportAction>
+
+  <ImportAction name="merge">
+    <UIConfig name='UIConfig'>
+      <Attributes>
+        <Map>
+          <entry key="uiAcctGroupMembershipCertificationExportColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="cert_item_tbl_header_identity" property="Identity.displayName" />
+                <ColumnConfig headerKey="cert_item_tbl_header_firstname" dataIndex="Identity-firstname" property="Identity.firstname" />
+                <ColumnConfig headerKey="cert_item_tbl_header_lastname" dataIndex="Identity-lastname" property="Identity.lastname" />
+                <ColumnConfig headerKey="cert_item_tbl_header_type" property="parent.schemaObjectType" />
+                <ColumnConfig headerKey="cert_item_tbl_header_description" dataIndex="description" property="IIQ_description" evaluator="sailpoint.web.view.certification.CertificationItemDescriptionColumn" />
+                <ColumnConfig headerKey="cert_item_tbl_header_account_group" property="parent.accountGroup" />
+                <ColumnConfig headerKey="cert_item_tbl_header_accountid" property="exceptionEntitlements.nativeIdentity" />
+                <ColumnConfig headerKey="cert_item_tbl_header_accountDisplayName" dataIndex="accountName" property="exceptionEntitlements.displayName" />
+                <ColumnConfig headerKey="cert_item_tbl_header_decision" property="IIQ_decision" evaluator="sailpoint.web.view.certification.CertificationItemCurrentDecisionStateColumn"/>
+                <ColumnConfig headerKey="certification_decision_comment" property="IIQ_decisionComment" evaluator="sailpoint.web.view.certification.CertificationItemCurrentDecisionCommentColumn" />
+                <ColumnConfig headerKey="manager" property="Identity.manager.displayName" />
+              </List>
+            </value>
+          </entry>
+          <entry key="uiCertificationExportWithRecommendationColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="parent-identity" groupProperty="parent.identity" headerKey="cert_item_tbl_header_identity" property="parent.identity" sortProperty="parent.identity" stateId="parent-identity"/>
+                <ColumnConfig dataIndex="firstName" groupProperty="parent.firstname" headerKey="cert_item_tbl_header_firstname" property="parent.firstname" sortProperty="parent.firstname" stateId="firstName"/>
+                <ColumnConfig dataIndex="lastName" groupProperty="parent.lastname" headerKey="cert_item_tbl_header_lastname" property="parent.lastname" sortProperty="parent.lastname" stateId="lastName"/>
+                <ColumnConfig dataIndex="type" evaluator="sailpoint.web.view.certification.ShortItemTypeColumn" groupProperty="type" headerKey="cert_item_tbl_header_type" property="type" sortProperty="type" stateId="type"/>
+                <ColumnConfig dataIndex="displayName" evaluator="sailpoint.web.view.certification.CertificationItemDisplayNameColumn" groupProperty="IIQ_displayName" headerKey="cert_item_tbl_header_display_name" property="IIQ_displayName" sortProperty="IIQ_displayName" stateId="displayName"/>
+                <ColumnConfig dataIndex="description" evaluator="sailpoint.web.view.certification.CertificationItemDescriptionColumn" groupProperty="IIQ_description" headerKey="cert_item_tbl_header_description" property="IIQ_description" sortProperty="IIQ_description" stateId="description"/>
+                <ColumnConfig dataIndex="application" groupProperty="exceptionApplication" headerKey="cert_item_tbl_header_application" property="exceptionApplication" sortProperty="exceptionApplication" stateId="application"/>
+                <ColumnConfig dataIndex="summaryStatus" groupProperty="summaryStatus" headerKey="status" property="summaryStatus" sortProperty="summaryStatus" stateId="summaryStatus"/>
+                <ColumnConfig dataIndex="accountName" groupProperty="exceptionEntitlements.displayName" headerKey="cert_item_tbl_header_accountDisplayName" property="exceptionEntitlements.displayName" sortProperty="exceptionEntitlements.displayName" stateId="accountName"/>
+                <ColumnConfig dataIndex="IIQ_decision" evaluator="sailpoint.web.view.certification.CertificationItemCurrentDecisionStateColumn" groupProperty="IIQ_decision" headerKey="cert_item_tbl_header_decision" property="IIQ_decision" sortProperty="IIQ_decision" stateId="IIQ_decision"/>
+                <ColumnConfig dataIndex="IIQ_decisionComment" evaluator="sailpoint.web.view.certification.CertificationItemCurrentDecisionCommentColumn" groupProperty="IIQ_decisionComment" headerKey="certification_decision_comment" property="IIQ_decisionComment" sortProperty="IIQ_decisionComment" stateId="IIQ_decisionComment"/>
+                <ColumnConfig dataIndex="IIQ_recommendedDecision" evaluator="sailpoint.web.view.certification.CertificationItemRecommendationColumn" groupProperty="IIQ_recommendedDecision" headerKey="ui_recommendations" property="IIQ_recommendedDecision" sortProperty="IIQ_recommendedDecision" stateId="IIQ_recommendedDecision"/>
+                <ColumnConfig dataIndex="IIQ_recommendedDecisionReasons" evaluator="sailpoint.web.view.certification.CertificationItemRecommendationReasonsColumn" groupProperty="IIQ_recommendedDecisionReasons" headerKey="ui_recommendations_reasons" property="IIQ_recommendedDecisionReasons" sortProperty="IIQ_recommendedDecisionReasons" stateId="IIQ_recommendedDecisionReasons"/>
+                <ColumnConfig dataIndex="IIQ_recommendedDecisionTimestamp" evaluator="sailpoint.web.view.certification.CertificationItemRecommendationTimestampColumn" groupProperty="IIQ_recommendedDecisionTimestamp" headerKey="ui_recommendations_timestamp" property="IIQ_recommendedDecisionTimestamp" sortProperty="IIQ_recommendedDecisionTimestamp" stateId="IIQ_recommendedDecisionTimestamp"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiViolationsWidgetColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="description" headerKey="ui_work_items_widget_name" sortable="false" renderer="encodeHtml,priorityFlag"/>
+                <ColumnConfig dataIndex="target" headerKey="ui_work_items_widget_user" sortable="false" renderer="displayableName,encodeHtml"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="oAuthClientConfigColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="proxyUser" headerKey="ui_oauth_grid_hdr_proxy_user" property="proxyUser" sortable="false" renderer="displayableName,encodeHtml"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiCertificationItemReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiTargetedCertificationItemReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiEntitlementOwnerCertificationItemReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiBusinessRoleMembershipCertificationItemReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="cert_item_tbl_header_comment" dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiBusinessRoleMembershipCertificationItemDetailViewReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="cert_item_tbl_header_comment" dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiAccountGroupMembershipCertificationItemReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiAccountGroupMembershipCertificationItemDetailViewReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiAccountGroupPermissionsCertificationItemReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" groupProperty="IIQ_decisionHistory" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn" sortProperty="IIQ_decisionHistory" stateId="comments"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiAccountGroupPermissionsCertificationItemDetailViewReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" groupProperty="IIQ_decisionHistory" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn" sortProperty="IIQ_decisionHistory" stateId="comments"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiRoleCompCertificationItemReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="cert_item_tbl_header_comment" dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiRoleCompCertificationItemDetailViewReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="cert_item_tbl_header_comment" dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiCertificationItemDetailViewReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiTargetedCertificationItemDetailViewReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiEntitlementOwnerCertificationItemDetailViewReturnedItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="comments" evaluator="sailpoint.web.view.certification.CertificationDecisionCommentColumn" headerKey="cert_item_tbl_header_comment" hideable="true" percentWidth="15" property="IIQ_decisionHistory" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <!-- UIConfig entry for the contextual help entries -->
+          <entry key="contextualHelp">
+            <value>
+              <Map>
+                <entry key="certificationScheduleEntityURL">
+                  <value>
+                    <ContextualHelpItem key="certificationScheduleEntityURL" enabled="true" useTemplate="true" title="ui_certification_schedule_entity_help_title"
+                      type="URL" url="ui/help/certification/schedule/certification-schedule-entity-help.html"
+                      homeUrl="certification/schedule.jsf" height="600" width="1024"/>
+                  </value>
+                </entry>
+                <entry key="certificationScheduleItemURL">
+                  <value>
+                    <ContextualHelpItem key="certificationScheduleItemURL" enabled="true" useTemplate="true" title="ui_certification_schedule_item_help_title"
+                      type="URL" url="ui/help/certification/schedule/certification-schedule-item-help.html"
+                      homeUrl="certification/schedule.jsf" height="600" width="1024"/>
+                  </value>
+                </entry>
+                <entry key="certificationScheduleCertifierURL">
+                  <value>
+                    <ContextualHelpItem key="certificationScheduleCertifierURL" enabled="true" useTemplate="true" title="ui_certification_schedule_certifier_help_title"
+                      type="URL" url="ui/help/certification/schedule/certification-schedule-certifier-help.html"
+                      homeUrl="certification/schedule.jsf" height="600" width="1024"/>
+                  </value>
+                </entry>
+                <entry key="certificationScheduleTimelineURL">
+                  <value>
+                    <ContextualHelpItem key="certificationScheduleTimelineURL" enabled="true" useTemplate="true" title="ui_certification_schedule_timeline_help_title"
+                      type="URL" url="ui/help/certification/schedule/certification-schedule-timeline-help.html"
+                      homeUrl="certification/schedule.jsf" height="600" width="1024"/>
+                  </value>
+                </entry>
+                <entry key="certificationScheduleAdditionalOptionsURL">
+                  <value>
+                    <ContextualHelpItem key="certificationScheduleAdditionalOptionsURL" enabled="true" useTemplate="true" title="ui_certification_schedule_additional_options_help_title"
+                      homeUrl="certification/schedule.jsf"
+                      type="URL" url="ui/help/certification/schedule/certification-schedule-additional-options-help.html" height="600" width="1024"/>
+                  </value>
+                </entry>
+                <entry key="manageUserAccessURL">
+                  <value>
+                    <ContextualHelpItem key="manageUserAccessURL" enabled="true" useTemplate="true" title="ui_manage_user_access_help"
+                      homeUrl="accessRequest/accessRequest.jsf"
+                      type="URL" url="ui/help/accessRequest/manage-user-access-help.html" height="600" width="1024"/>
+                  </value>
+                </entry>
+                <entry key="accessReviewDetailURL">
+                  <value>
+                    <ContextualHelpItem key="accessReviewDetailURL" enabled="true" useTemplate="true" title="ui_access_review_detail_help"
+                      homeUrl="certification/certification.jsf"
+                      type="URL" url="ui/help/accessReview/access-review-detail-help.html" height="600" width="1024"/>
+                  </value>
+                </entry>
+                <entry key="accessReviewSummaryCardURL">
+                  <value>
+                    <ContextualHelpItem key="accessReviewSummaryCardURL" enabled="true" useTemplate="true" title="ui_access_review_summary_card_help"
+                      homeUrl="certification/certification.jsf"
+                      type="URL" url="ui/help/accessReview/access-review-summary-card-help.html" height="600" width="1024"/>
+                  </value>
+                </entry>
+              </Map>
+            </value>
+          </entry>
+        </Map>
+      </Attributes>
+    </UIConfig>
+  </ImportAction>
+
+  <ImportAction name="merge">
+    <QuickLink name="Policy Violations" category="Tasks"
+               messageKey="quicklink_policy_violations" action="listViolations" cssClass="quicklink-policy-violations">
+      <Attributes>
+        <Map>
+          <entry key="displayText" value="true" />
+          <entry key="ownerId">
+            <value>
+              <Script>
+                <Source>
+                  return currentUser.getId();
+                </Source>
+              </Script>
+            </value>
+          </entry>
+          <entry key="textScript">
+            <value>
+              <Script>
+                <Source>
+                  <![CDATA[
+                              import sailpoint.object.PolicyViolation;
+                              import sailpoint.object.QueryOptions;
+                              import sailpoint.object.Filter;
+                              import sailpoint.object.Identity;
+                              import java.util.List;
+                              import java.util.ArrayList;
+                              import java.util.Iterator;
+                              import sailpoint.object.WorkItem;
+
+                              QueryOptions qo = new QueryOptions();
+                              List filters = new ArrayList();
+
+                              filters.add(Filter.eq("owner", currentUser));
+
+                              if (currentUser.getWorkgroups() != null && !currentUser.getWorkgroups().isEmpty())
+                              {
+                                filters.add(Filter.in("owner", currentUser.getWorkgroups()));
+                              }
+
+                              List<String> delegatedViolationIds = new ArrayList();
+                              qo.add(Filter.eq("type", WorkItem.Type.Delegation));
+                              qo.add(Filter.or(filters));
+                              Iterator iter = context.search(WorkItem.class, qo, "targetId");
+                              while (iter.hasNext()) {
+                                  delegatedViolationIds.add((String) iter.next()[0]);
+                              }
+
+                              if (!delegatedViolationIds.isEmpty())
+                              {
+                                  filters.add(Filter.in("id", delegatedViolationIds));
+                              }
+                              qo = new QueryOptions();
+                              qo.addFilter(Filter.or(filters));
+                              qo.addFilter(Filter.or(Filter.eq("status", PolicyViolation.Status.Open), Filter.eq("status", PolicyViolation.Status.Delegated)));
+                              qo.addFilter(Filter.eq("active", Boolean.TRUE));
+                              int count =
+                              context.countObjects(PolicyViolation.class, qo);
+                              return count;
+                              ]]>
+                </Source>
+              </Script>
+            </value>
+          </entry>
+        </Map>
+      </Attributes>
+      <Description>quicklink_policy_violations_desc</Description>
+      <QuickLinkOptions allowSelf="true">
+        <DynamicScopeRef>
+          <Reference class="sailpoint.object.DynamicScope" name="Everyone"/>
+        </DynamicScopeRef>
+      </QuickLinkOptions>
+    </QuickLink>
+      <QuickLink name="Access Reviews" category="Tasks"
+             messageKey="quicklink_access_reviews" action="viewCertifications" cssClass="quicklink-access-reviews">
+        <Attributes>
+          <Map>
+            <entry key="displayText" value="true" />
+            <entry key="textScript">
+              <value>
+                <Script>
+                  <Source>
+                    <![CDATA[
+                      import sailpoint.object.Certification;
+                      import sailpoint.object.Filter;
+                      import sailpoint.object.QueryOptions;
+                      import sailpoint.service.certification.CertificationListService;                                    
+                      
+                      QueryOptions qo = new QueryOptions();
+                      qo.addFilter(CertificationListService.getMyCertificationsFilter(currentUser, false));
+    
+                      return context.countObjects(Certification.class, qo);
+                    ]]>
+                  </Source>
+                </Script>
+              </value>
+            </entry>
+            <entry key="textAriaLabel" value="quicklink_access_reviews_text_aria_label" />
+          </Map>
+        </Attributes>
+        <Description>quicklink_access_reviews_desc</Description>
+        <QuickLinkOptions allowSelf="true">
+          <DynamicScopeRef>
+            <Reference class="sailpoint.object.DynamicScope" name="Everyone"/>
+          </DynamicScopeRef>
+        </QuickLinkOptions>
+      </QuickLink>
+    
+    
+      <QuickLink name="Mobile Access Reviews" category="Tasks"
+                 messageKey="quicklink_access_reviews" action="viewCertifications"
+                 cssClass="quicklink-access-reviews" hidden="true">
+        <Attributes>
+          <Map>
+            <entry key="displayText" value="true" />
+            <entry key="textScript">
+              <value>
+                <Script>
+                  <Source>
+                    <![CDATA[
+                      import sailpoint.object.Certification;
+                      import sailpoint.object.Filter;
+                      import sailpoint.object.QueryOptions;
+                      import sailpoint.service.certification.CertificationListService;                                    
+                      
+                      QueryOptions qo = new QueryOptions();
+                      qo.addFilter(CertificationListService.getMyCertificationsFilter(currentUser, true));
+    
+                      return context.countObjects(Certification.class, qo);
+                    ]]>
+                  </Source>
+                </Script>
+              </value>
+            </entry>
+            <entry key="textAriaLabel" value="quicklink_access_reviews_text_aria_label" />
+          </Map>
+        </Attributes>
+        <Description>quicklink_access_reviews_desc</Description>
+        <QuickLinkOptions allowSelf="true">
+          <DynamicScopeRef>
+            <Reference class="sailpoint.object.DynamicScope" name="Everyone"/>
+          </DynamicScopeRef>
+        </QuickLinkOptions>
+      </QuickLink>
+    </ImportAction>
+    
+    <!-- Override Approvals quicklink instead of merge if already exist -->
+    <QuickLink name="Approvals" category="Tasks" messageKey="quicklink_approvals"
+               action="viewApprovals" cssClass="quicklink-approvals">
+        <Attributes>
+            <Map>
+                <entry key="displayText" value="true" />
+                <entry key="workItemType" value="Approval" />
+                <entry key="textScript">
+                    <value>
+                        <Script>
+                            <Source>
+                          <![CDATA[
+                            import sailpoint.object.WorkItem;
+                            import sailpoint.object.QueryOptions;
+                            import sailpoint.object.Filter;
+                            import java.util.List;
+                            import java.util.ArrayList;
+          
+                            QueryOptions qo = new QueryOptions();
+                            List filters = new ArrayList();
+
+                            filters.add(Filter.eq("owner", currentUser));
+                                   
+                            if (currentUser.getWorkgroups() != null && !currentUser.getWorkgroups().isEmpty())
+                            {
+                              filters.add(Filter.in("owner", currentUser.getWorkgroups()));
+                            }    
+
+                            qo.addFilter(Filter.eq("type", "Approval"));
+                            qo.addFilter(Filter.or(filters));
+          
+                            int count = context.countObjects(WorkItem.class, qo);
+                            return count;
+                          ]]>
+                            </Source>
+                        </Script>
+                    </value>
+                </entry>
+              <entry key="textAriaLabel" value="quicklink_approvals_text_aria_label" />
+            </Map>
+        </Attributes>
+        <Description>quicklink_approvals_desc</Description>
+      <QuickLinkOptions allowSelf="true">
+        <DynamicScopeRef>
+          <Reference class="sailpoint.object.DynamicScope" name="Everyone"/>
+        </DynamicScopeRef>
+      </QuickLinkOptions>
+    </QuickLink>
+
+  <ImportAction name="merge">
+    <AuditConfig name='AuditConfig'>
+      <AuditActions>
+        <AuditAction name="attachmentsPruned" displayName="audit_action_pruneAttachments"/>
+      </AuditActions>
+
+      <AuditClasses>
+        <AuditClass name='Attachment'/>
+      </AuditClasses>
+    </AuditConfig>
+  </ImportAction>
+  
+  <!-- New Configuration object for IdentityAI -->
+  <ImportAction name="merge">
+    <Configuration name='IdentityAIConfiguration'>
+      <Attributes>
+        <Map>
+          <entry key="readTimeoutSeconds" value="60" />
+          <entry key="connectTimeoutSeconds" value="10" />
+          <entry key="recommendationsEndpoint" value="beta/recommendations/request" />
+        </Map>
+      </Attributes>
+    </Configuration>
+  </ImportAction>
+
+  <!-- New RequestDefinition object for the System Maintenance Pruner Task -->
+  <RequestDefinition executor="sailpoint.request.PrunerRequestExecutor"
+                     name="System Maintenance Pruner Partition">
+    <Attributes>
+      <Map>
+        <entry key="maxThreads" value="4"/>
+      </Map>
+    </Attributes>
+  </RequestDefinition>
+
+  <!-- New TaskDefinition for the Checking Request objects for notifications -->
+  <TaskDefinition executor="sailpoint.task.RequestNotificationScanner" name="Check Sunset Requests"
+                  type="System">
+    <Description>Send notifications when a Role with a sunset is approaching expiration</Description>
+    <Signature>
+        <Returns>
+            <Argument name="sent" type="int">
+                <Prompt>task_out_notifications_sent</Prompt>
+            </Argument>
+
+        </Returns>
+    </Signature>
+  </TaskDefinition>
+
+  <!-- New daily TaskSchedule for the checking of Request objects for notifications -->
+  <TaskSchedule name="Check sunset requests for notifications daily">
+    <Description>Check for Roles and Entitlements that are about to expire and send a notification every day at midnight</Description>
+    <Arguments>
+      <Map>
+        <entry key="executor" value="Check Sunset Requests"/>
+      </Map>
+    </Arguments>
+    <CronExpressions>
+      <String>0 0 0 * * ?</String>
+    </CronExpressions>
+  </TaskSchedule>
+
+</sailpoint>

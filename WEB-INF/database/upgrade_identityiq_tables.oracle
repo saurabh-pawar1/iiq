@@ -1,0 +1,147 @@
+--
+-- This script contains DDL statements to upgrade a database schema to
+-- reflect changes to the model.  This file should only be used to
+-- upgrade from the last formal release version to the current code base.
+--
+
+-- Add Request.live column
+alter table identityiq.spt_request add live number(1,0) default 0;
+update identityiq.spt_request set live = 0;
+
+--
+-- New Attachment Table
+--
+create table identityiq.spt_attachment (
+   id varchar2(32 char) not null,
+    created number(19,0),
+    modified number(19,0),
+    assigned_scope_path varchar2(450 char),
+    name varchar2(256 char),
+    description varchar2(256 char),
+    content blob,
+    owner varchar2(32 char),
+    assigned_scope varchar2(32 char),
+    primary key (id)
+);
+
+create table identityiq.spt_identity_req_item_attach (
+   identity_request_item_id varchar2(32 char) not null,
+    idx number(10,0) not null,
+    attachment_id varchar2(32 char) not null,
+    primary key (identity_request_item_id, idx)
+);
+
+alter table identityiq.spt_attachment
+   add constraint FKbyb94bn214vosuh3a9cr6ydi3
+   foreign key (owner)
+   references identityiq.spt_identity;
+
+create index identityiq.FKbyb94bn214vosuh3a9cr6ydi3 on identityiq.spt_attachment (owner);
+
+alter table identityiq.spt_attachment
+   add constraint FKn1iv5d2bgun4hh7gmnyqyl0u7
+   foreign key (assigned_scope)
+   references identityiq.spt_scope;
+
+alter table identityiq.spt_identity_req_item_attach
+   add constraint FK9j07eg4emep4vaseaa779fatl
+   foreign key (attachment_id)
+   references identityiq.spt_attachment;
+
+create index identityiq.FK9j07eg4emep4vaseaa779fatl on identityiq.spt_identity_req_item_attach (attachment_id);
+
+alter table identityiq.spt_identity_req_item_attach
+   add constraint FK32c6p6xsumvu31gciybgj93f8
+   foreign key (identity_request_item_id)
+   references identityiq.spt_identity_request_item;
+
+create index identityiq.FK32c6p6xsumvu31gciybgj93f8 on identityiq.spt_identity_req_item_attach (identity_request_item_id);
+
+create index identityiq.FKn1iv5d2bgun4hh7gmnyqyl0u7 on identityiq.spt_attachment (assigned_scope);
+
+create index identityiq.SPT_IDXE758C3D7FFA1CC82 on identityiq.spt_attachment (assigned_scope_path);
+
+--
+-- Add client and server hosts to audit events
+--
+
+alter table identityiq.spt_audit_event add client_host varchar2(128 char);
+alter table identityiq.spt_audit_event add server_host varchar2(128 char);
+
+--
+-- Add a description attribute to application schemas
+--
+alter table identityiq.spt_application_schema add description_attribute varchar2(255 char);
+
+--
+-- IdentityAI recommendation schema changes
+--
+create table identityiq.spt_recommender_definition (
+  id varchar2(32 char) not null,
+  created number(19,0),
+  modified number(19,0),
+  name varchar2(128 char) not null,
+  attributes clob,
+  primary key (id)
+);
+
+alter table identityiq.spt_recommender_definition
+add constraint uk_ekuvq6a1uhwkxb7fofir077xv unique (name);
+
+create index identityiq.spt_recommender_definition_nam on identityiq.spt_recommender_definition (upper(name));
+alter table identityiq.spt_certification_item add recommend_value varchar2(100 char);
+
+create table identityiq.spt_module (
+  id varchar2(32 char) not null,
+  created number(19,0),
+  modified number(19,0),
+  name varchar2(128 char) not null,
+  description varchar2(512 char),
+  attributes clob,
+  primary key (id)
+);
+
+alter table identityiq.spt_module
+add constraint uk_bebq8nsflsucu90sph68pf43r unique (name);
+
+create index identityiq.spt_module_name on identityiq.spt_module (upper(name));
+
+--
+-- Access Request notification needed column addition
+--
+alter table identityiq.spt_request add notification_needed number(1,0) default 0;
+update identityiq.spt_request set notification_needed = 0;
+create index identityiq.spt_request_notif_needed on identityiq.spt_request (notification_needed);
+
+--
+-- Change some indexes to case insensitive indexes
+--
+drop index identityiq.spt_cert_group_id;
+create index identityiq.spt_cert_group_id_ci on identityiq.spt_certification (upper(group_definition_id));
+drop index identityiq.spt_cert_type;
+create index identityiq.spt_cert_type_ci on identityiq.spt_certification (upper(type));
+drop index identityiq.spt_certification_phase;
+create index identityiq.spt_cert_phase_ci on identityiq.spt_certification (upper(phase));
+drop index identityiq.spt_cert_group_name;
+create index identityiq.spt_cert_group_name_ci on identityiq.spt_certification (upper(group_definition_name));
+drop index identityiq.spt_certification_short_name;
+create index identityiq.spt_cert_short_name_ci on identityiq.spt_certification (upper(short_name));
+drop index identityiq.spt_cert_application;
+create index identityiq.spt_cert_application_ci on identityiq.spt_certification (upper(application_id));
+drop index identityiq.spt_cert_cert_def_id;
+create index identityiq.spt_cert_cert_def_id_ci on identityiq.spt_certification (upper(certification_definition_id));
+drop index identityiq.spt_certification_name;
+create index identityiq.spt_certification_name_ci on identityiq.spt_certification (upper(name));
+drop index identityiq.spt_cert_trigger_id;
+create index identityiq.spt_cert_trigger_id_ci on identityiq.spt_certification (upper(trigger_id));
+drop index identityiq.spt_cert_manager;
+create index identityiq.spt_cert_manager_ci on identityiq.spt_certification (upper(manager));
+drop index identityiq.spt_cert_task_sched_id;
+create index identityiq.spt_cert_task_sched_id_ci on identityiq.spt_certification (upper(task_schedule_id));
+
+--
+-- This is necessary to maintain the schema version. DO NOT REMOVE.
+--
+update identityiq.spt_database_version set schema_version = '8.0-09' where name = 'main';
+
+commit;

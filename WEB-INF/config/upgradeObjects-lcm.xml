@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE sailpoint PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+
+<!-- (c) Copyright 2008 SailPoint Technologies, Inc., All Rights Reserved. -->
+
+<!--
+  This is used by 'iiq upgrade' to drive upgrading the schema and data between
+  revisions.  
+
+  There are two files that define the upgrade: upgrade.xml and 
+  upgradeObjects.xml.  If you have LCM enabled, there are two additional
+  files, upgrade-lcm.xml and upgradeObjects-lcm.xml.
+
+  upgrade.xml and upgrade-lcm.xml are processed in a special way before
+  Hibernate is started so that changes can be made at the JDBC level.
+  These files should only contain <ImportAction> elements that use the
+  "execute" command to  call upgrader classes.  
+  *DO NOT PUT STATIC XML OBJECTS IN UPGRADE.XML OR UPGRADE-LCM.XML* 
+
+  upgradeObjects.xml and upgradeObjects-lcm.xml (this file) are
+  included by upgrade.xml and will be imported after Hibernate is started.
+  Any changes to objects that can be respesented as static XML or as
+  ImportActions with the "merge" command must go in these files to ensure
+  that they are parsed after Hibernate has been started so that
+  references can be resolved.  
+-->
+<sailpoint>
+
+  <!--
+     This will reimport some updated objects
+     and should be safe to do for every release.
+   -->
+  <ImportAction name="include" value="WEB-INF/config/lcmemailtemplates.xml"/>
+  <ImportAction name="include" value="WEB-INF/config/lcmworkflows.xml"/>
+  <ImportAction name="include" value="WEB-INF/config/lcmworkflowConfigForms.xml"/>
+  <ImportAction name="include" value="WEB-INF/config/batchworkflows.xml"/>
+  <ImportAction name="include" value="WEB-INF/config/lcmrules.xml"/>
+  <ImportAction name="include" value="WEB-INF/config/identityRequestWorkflowSubs.xml"/>
+  <ImportAction name='include' value='WEB-INF/config/lcmReportForms.xml'/>
+  <ImportAction name="include" value="WEB-INF/config/lcmReportTasks.xml"/>
+  <!-- End of object updates -->
+
+  <ImportAction name="merge">
+    <UIConfig name='UIConfig'>
+      <Attributes>
+        <Map>
+          <entry key="uiApprovalsWidgetColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="target" headerKey="ui_work_items_widget_approval_for" sortable="false" renderer="targetOrDescription,encodeHtml,priorityFlag"/>
+                <ColumnConfig dataIndex="requester" headerKey="ui_work_items_widget_requester" sortable="false" renderer="displayableName,encodeHtml" />
+              </List>
+            </value>
+          </entry>
+          <entry key="uiFormsWidgetColumns">
+            <value>
+              <List>
+                <ColumnConfig dataIndex="description" headerKey="ui_work_items_widget_name" sortable="false" renderer="encodeHtml,priorityFlag"/>
+                <ColumnConfig dataIndex="requester" headerKey="ui_work_items_widget_requester" sortable="false" renderer="displayableName,encodeHtml" />
+              </List>
+            </value>
+          </entry>
+        </Map>
+      </Attributes>
+    </UIConfig>
+  </ImportAction>
+
+
+  <ImportAction name="merge">
+    <UIConfig name='UIConfig'>
+      <Attributes>
+        <Map>
+          <entry key="uiBatchRequestItemsTableColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="ui_batch_request_items_request_data" property="requestData" sortable="true" hideable="true" />
+                <ColumnConfig headerKey="ui_batch_request_items_result" property="result" sortable="true" hideable="true" />
+                <ColumnConfig headerKey="ui_batch_request_items_status" property="status" sortable="true" hideable="true" />
+                <ColumnConfig headerKey="ui_batch_request_items_identity_request_id" property="identityRequestId" sortable="true" hideable="true" />
+                <ColumnConfig fieldOnly="true" property="errorMessage" />
+              </List>
+            </value>
+          </entry>
+          <entry key="uiIdentityRequestItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="ui_identity_request_item_comments" dataIndex="requesterComments" minWidth="150" sortable="false" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiIdentityRequestItemsPasswordColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="ui_identity_request_item_comments" dataIndex="requesterComments" minWidth="150" sortable="false" renderer="spMoreLessToggleEncodedColumn"/>
+              </List>
+            </value>
+          </entry>
+          <entry key="uiIdentityRequestItemsIdentityColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="ui_identity_request_item_comments" dataIndex="requesterComments" minWidth="150" sortable="false" renderer="spMoreLessToggleEncodedColumn" />
+              </List>
+            </value>
+          </entry>
+        </Map>
+      </Attributes>
+    </UIConfig>
+  </ImportAction>
+
+  <ImportAction name="merge">
+    <UIConfig name='UIConfig'>
+      <Attributes>
+        <Map>
+          <entry key="uiIdentityRequestItemsColumns">
+            <value>
+              <List>
+                <ColumnConfig headerKey="ui_identity_request_item_attachments" property="attributes" sortable="false" renderer="spIdentityRequestItemAttachments"/>
+              </List>
+            </value>
+          </entry>
+        </Map>
+      </Attributes>
+    </UIConfig>
+  </ImportAction>
+</sailpoint>

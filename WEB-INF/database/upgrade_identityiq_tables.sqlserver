@@ -1,0 +1,256 @@
+--
+-- This script contains DDL statements to upgrade a database schema to
+-- reflect changes to the model.  This file should only be used to
+-- upgrade from the last formal release version to the current code base.
+--
+
+USE identityiq
+GO
+
+-- Enable automatic snapshot isolation
+ALTER DATABASE identityiq SET ALLOW_SNAPSHOT_ISOLATION ON
+GO
+ALTER DATABASE identityiq SET READ_COMMITTED_SNAPSHOT ON
+GO
+
+alter table identityiq.spt_plugin
+add constraint uk_c7ccr73vpnee48igqv6w9spmp unique (file_id);
+GO
+
+-- Add Request.live column
+alter table identityiq.spt_request add live tinyint null default 0 with values;
+GO
+update identityiq.spt_request set live = 0;
+GO
+
+--
+-- Add client and server hosts to audit events
+--
+
+alter table identityiq.spt_audit_event add client_host nvarchar(128);
+GO
+alter table identityiq.spt_audit_event add server_host nvarchar(128);
+GO
+
+--
+-- Add a description attribute to application schemas
+--
+alter table identityiq.spt_application_schema add description_attribute nvarchar(255);
+GO
+
+--
+-- Access Request notification needed column addition
+--
+alter table identityiq.spt_request add notification_needed tinyint null default 0 with values;
+GO
+update identityiq.spt_request set notification_needed = 0;
+GO
+create index spt_request_notif_needed on identityiq.spt_request (notification_needed);
+GO
+
+--
+-- Change some indexes to case insensitive indexes
+--
+drop index spt_cert_group_id on identityiq.spt_certification;
+GO
+create index spt_cert_group_id_ci on identityiq.spt_certification (group_definition_id);
+GO
+drop index spt_cert_type on identityiq.spt_certification;
+GO
+create index spt_cert_type_ci on identityiq.spt_certification (type);
+GO
+drop index spt_certification_phase on identityiq.spt_certification;
+GO
+create index spt_cert_phase_ci on identityiq.spt_certification (phase);
+GO
+drop index spt_cert_group_name on identityiq.spt_certification;
+GO
+create index spt_cert_group_name_ci on identityiq.spt_certification (group_definition_name);
+GO
+drop index spt_certification_short_name on identityiq.spt_certification;
+GO
+create index spt_cert_short_name_ci on identityiq.spt_certification (short_name);
+GO
+drop index spt_cert_application on identityiq.spt_certification;
+GO
+create index spt_cert_application_ci on identityiq.spt_certification (application_id);
+GO
+drop index spt_cert_cert_def_id on identityiq.spt_certification;
+GO
+create index spt_cert_cert_def_id_ci on identityiq.spt_certification (certification_definition_id);
+GO
+drop index spt_certification_name on identityiq.spt_certification;
+GO
+create index spt_certification_name_ci on identityiq.spt_certification (name);
+GO
+drop index spt_cert_trigger_id on identityiq.spt_certification;
+GO
+create index spt_cert_trigger_id_ci on identityiq.spt_certification (trigger_id);
+GO
+drop index spt_cert_manager on identityiq.spt_certification;
+GO
+create index spt_cert_manager_ci on identityiq.spt_certification (manager);
+GO
+drop index spt_cert_task_sched_id on identityiq.spt_certification;
+GO
+create index spt_cert_task_sched_id_ci on identityiq.spt_certification (task_schedule_id);
+GO
+
+-- Convert sequence tables to sequence objects
+IF NOT EXISTS(select * from sys.sequences where object_id = object_id('identityiq.spt_work_item_sequence'))
+BEGIN
+DECLARE @WIS int
+SELECT @WIS = CAST(next_val AS int) FROM identityiq.spt_work_item_sequence
+DROP TABLE identityiq.spt_work_item_sequence
+exec('CREATE SEQUENCE identityiq.spt_work_item_sequence start with ' + @WIS + ' increment by 1')
+END;
+GO
+
+IF NOT EXISTS(select * from sys.sequences where object_id = object_id('identityiq.spt_prv_trans_sequence'))
+BEGIN
+DECLARE @PTS int
+SELECT @PTS = CAST(next_val AS int) FROM identityiq.spt_prv_trans_sequence
+DROP TABLE identityiq.spt_prv_trans_sequence
+exec('CREATE SEQUENCE identityiq.spt_prv_trans_sequence start with ' + @PTS + ' increment by 1')
+END;
+GO
+
+IF NOT EXISTS(select * from sys.sequences where object_id = object_id('identityiq.spt_alert_sequence'))
+BEGIN
+DECLARE @AS int
+SELECT @AS = CAST(next_val AS int) FROM identityiq.spt_alert_sequence
+DROP TABLE identityiq.spt_alert_sequence
+exec('CREATE SEQUENCE identityiq.spt_alert_sequence start with ' + @AS + ' increment by 1')
+END;
+GO
+
+IF NOT EXISTS(select * from sys.sequences where object_id = object_id('identityiq.spt_identity_request_sequence'))
+BEGIN
+DECLARE @IRS int
+SELECT @IRS = CAST(next_val AS int) FROM identityiq.spt_identity_request_sequence
+DROP TABLE identityiq.spt_identity_request_sequence
+exec('CREATE SEQUENCE identityiq.spt_identity_request_sequence start with ' + @IRS + ' increment by 1')
+END;
+GO
+
+IF NOT EXISTS(select * from sys.sequences where object_id = object_id('identityiq.spt_syslog_event_sequence'))
+BEGIN
+DECLARE @SES int
+SELECT @SES = CAST(next_val AS int) FROM identityiq.spt_syslog_event_sequence
+DROP TABLE identityiq.spt_syslog_event_sequence
+exec('CREATE SEQUENCE identityiq.spt_syslog_event_sequence start with ' + @SES + ' increment by 1')
+END;
+GO
+
+
+--
+-- IdentityAI recommendation schema changes
+--
+create table identityiq.spt_recommender_definition (
+  id nvarchar(32) not null,
+  created numeric(19,0),
+  modified numeric(19,0),
+  name nvarchar(128) not null,
+  attributes nvarchar(max),
+  primary key (id)
+);
+GO
+
+alter table identityiq.spt_recommender_definition
+add constraint uk_ekuvq6a1uhwkxb7fofir077xv unique (name);
+GO
+
+create index spt_recommender_def_name_ci on identityiq.spt_recommender_definition (name);
+GO
+alter table identityiq.spt_certification_item add recommend_value nvarchar(100);
+GO
+
+create table identityiq.spt_module (
+  id nvarchar(32) not null,
+  created numeric(19,0),
+  modified numeric(19,0),
+  name nvarchar(128) not null,
+  description nvarchar(512),
+  attributes nvarchar(max),
+  primary key (id)
+);
+GO
+
+alter table identityiq.spt_module
+add constraint uk_bebq8nsflsucu90sph68pf43r unique (name);
+GO
+
+create index spt_module_name_ci on identityiq.spt_module (name);
+GO
+
+--
+-- New Attachment Table
+--
+
+create table identityiq.spt_attachment (
+   id nvarchar(32) not null,
+    created numeric(19,0),
+    modified numeric(19,0),
+    assigned_scope_path nvarchar(450),
+    name nvarchar(256),
+    description nvarchar(256),
+    content varbinary(max),
+    owner nvarchar(32),
+    assigned_scope nvarchar(32),
+    primary key (id)
+);
+GO
+
+create table identityiq.spt_identity_req_item_attach (
+   identity_request_item_id nvarchar(32) not null,
+    idx int not null,
+    attachment_id nvarchar(32) not null,
+    primary key (identity_request_item_id, idx)
+);
+GO
+
+alter table identityiq.spt_attachment
+   add constraint FKbyb94bn214vosuh3a9cr6ydi3
+   foreign key (owner)
+   references identityiq.spt_identity;
+GO
+
+create index FKbyb94bn214vosuh3a9cr6ydi3 on identityiq.spt_attachment (owner);
+GO
+
+alter table identityiq.spt_attachment
+   add constraint FKn1iv5d2bgun4hh7gmnyqyl0u7
+   foreign key (assigned_scope)
+   references identityiq.spt_scope;
+GO
+
+alter table identityiq.spt_identity_req_item_attach
+   add constraint FK9j07eg4emep4vaseaa779fatl
+   foreign key (attachment_id)
+   references identityiq.spt_attachment;
+GO
+
+create index FK9j07eg4emep4vaseaa779fatl on identityiq.spt_identity_req_item_attach (attachment_id);
+GO
+
+alter table identityiq.spt_identity_req_item_attach
+   add constraint FK32c6p6xsumvu31gciybgj93f8
+   foreign key (identity_request_item_id)
+   references identityiq.spt_identity_request_item;
+GO
+
+create index FK32c6p6xsumvu31gciybgj93f8 on identityiq.spt_identity_req_item_attach (identity_request_item_id);
+GO
+
+create index FKn1iv5d2bgun4hh7gmnyqyl0u7 on identityiq.spt_attachment (assigned_scope);
+GO
+
+create index SPT_IDXE758C3D7FFA1CC82 on identityiq.spt_attachment (assigned_scope_path);
+GO
+
+
+--
+-- This is necessary to maintain the schema version. DO NOT REMOVE.
+--
+update identityiq.spt_database_version set schema_version='8.0-09' where name='main';
+GO
